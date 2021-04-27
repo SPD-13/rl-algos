@@ -172,7 +172,7 @@ def n_step_sarsa(n):
         print(f'{k + 1}: Episode finished after {t - n + 1} timesteps.')
 
 time_start = time.perf_counter()
-averages_sarsa, total_steps = q_learning()
+averages_sarsa, total_steps = sarsa()
 time_end = time.perf_counter()
 
 execution_time = time_end - time_start
