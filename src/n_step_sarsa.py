@@ -70,10 +70,15 @@ def sarsa():
         while not done:
             t += 1
             env.render()
+            if t == 500:
+                break
             observation, reward, done, info = env.step(a)
             s_prime = get_state(observation)
             a_prime = choose_action(q, s_prime, epsilon)
-            q[s, a] += alpha * (reward + discount * q[s_prime, a_prime] - q[s, a])
+            future = 0
+            if not done:
+                future = q[s_prime, a_prime]
+            q[s, a] += alpha * (reward + discount * future - q[s, a])
             s, a = s_prime, a_prime
         print(f'{k + 1}: Episode finished after {t} timesteps.')
 
@@ -88,10 +93,15 @@ def q_learning():
         while not done:
             t += 1
             env.render()
+            if t == 500:
+                break
             a = choose_action(q, s, epsilon)
             observation, reward, done, info = env.step(a)
             s_prime = get_state(observation)
-            q[s, a] += alpha * (reward + discount * np.amax(q[s_prime]) - q[s, a])
+            future = 0
+            if not done:
+                future = np.amax(q[s_prime])
+            q[s, a] += alpha * (reward + discount * future - q[s, a])
             s = s_prime
         print(f'{k + 1}: Episode finished after {t} timesteps.')
 
@@ -134,5 +144,6 @@ def n_step_sarsa(n):
             t += 1
         print(f'{k + 1}: Episode finished after {t - n + 1} timesteps.')
 
-n_step_sarsa(8)
+q_learning()
+#n_step_sarsa(8)
 env.close()
