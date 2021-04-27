@@ -54,15 +54,9 @@ def get_state(observation):
 
 # Choose an action with epsilon-greedy policy
 def choose_action(q, state, epsilon):
-    action = 0 if q[state, 0] > q[state, 1] else 1
     if random.random() < epsilon:
-        action = (action + 1) % 2
-    return action
-
-# Choose an action with greedy policy
-def choose_action_max(q, state, epsilon):
-    action = 0 if q[state, 0] > q[state, 1] else 1
-    return action
+        return env.action_space.sample()
+    return np.argmax(q[state])
 
 def sarsa():
     q = np.zeros((number_states, 2))
@@ -79,12 +73,29 @@ def sarsa():
             observation, reward, done, info = env.step(a)
             s_prime = get_state(observation)
             a_prime = choose_action(q, s_prime, epsilon)
-            a_max = choose_action_max(q, s_prime, epsilon)
             q[s, a] += alpha * (reward + discount * q[s_prime, a_prime] - q[s, a])
             s, a = s_prime, a_prime
         print(f'{k + 1}: Episode finished after {t} timesteps.')
 
-def nStepSarsa(n):
+def q_learning():
+    q = np.zeros((number_states, 2))
+    for k in range(1000):
+        epsilon = 1 / (k + 1)
+        done = False
+        t = 0
+        observation = env.reset()
+        s = get_state(observation)
+        while not done:
+            t += 1
+            env.render()
+            a = choose_action(q, s, epsilon)
+            observation, reward, done, info = env.step(a)
+            s_prime = get_state(observation)
+            q[s, a] += alpha * (reward + discount * np.amax(q[s_prime]) - q[s, a])
+            s = s_prime
+        print(f'{k + 1}: Episode finished after {t} timesteps.')
+
+def n_step_sarsa(n):
     if n < 1:
         return
     q = np.zeros((number_states, 2))
@@ -123,6 +134,5 @@ def nStepSarsa(n):
             t += 1
         print(f'{k + 1}: Episode finished after {t - n + 1} timesteps.')
 
-#sarsa()
-nStepSarsa(8)
+n_step_sarsa(8)
 env.close()
