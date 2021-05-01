@@ -131,3 +131,5 @@ dmypy.json
 # Code editors
 .vs
 .vscode
+
+.idea/
