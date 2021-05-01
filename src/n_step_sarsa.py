@@ -135,13 +135,18 @@ def q_learning():
 def n_step_sarsa(n):
     if n < 1:
         return
+    scores = []
+    averages = []
+    average = 0
+    total_steps = 0
     q = np.zeros((number_states, 2))
     s = np.zeros(n + 1, dtype=int)
     a = np.zeros(n + 1, dtype=int)
     r = np.zeros(n + 1)
     m = lambda t: t % (n + 1)
-    for k in range(1000):
-        epsilon = 1 / (k + 1)
+    k = 1
+    while average < 475:
+        epsilon = 1 / k
         T = 500
         t = 0
         observation = env.reset()
@@ -169,31 +174,30 @@ def n_step_sarsa(n):
                     g += discount ** n * q[s[m(tau + n)], a[m(tau + n)]]
                 q[s[m(tau)], a[m(tau)]] += alpha * (g - q[s[m(tau)], a[m(tau)]])
             t += 1
-        print(f'{k + 1}: Episode finished after {t - n + 1} timesteps.')
+        print(f'{k}: Episode finished after {T} timesteps.')
+        scores.append(T)
+        # Average of the last 100 episodes
+        average = sum(scores[-100:]) / 100
+        averages.append(average)
+        total_steps += T
+        k += 1
+    return scores, total_steps
 
 time_start = time.perf_counter()
-averages_sarsa, total_steps = sarsa()
+scores, averages, total_steps = n_step_sarsa(8)
 time_end = time.perf_counter()
 
 execution_time = time_end - time_start
-print('\n-- Sarsa --')
-print(f'Number of episodes before convergence: {len(averages_sarsa)}')
+print('\n-- n-step Sarsa --')
+print(f'Number of episodes before convergence: {len(scores)}')
 print(f'Execution time per 1000 time steps: {execution_time * 1000 / total_steps:.4f}s\n')
 
-time_start = time.perf_counter()
-averages_q, total_steps = q_learning()
-time_end = time.perf_counter()
-
-execution_time = time_end - time_start
-print('-- Q-learning --')
-print(f'Number of episodes before convergence: {len(averages_q)}')
-print(f'Execution time per 1000 time steps: {execution_time * 1000 / total_steps:.4f}s')
-
-plt.plot(averages_sarsa, label='Sarsa')
-plt.plot(averages_q, label='Q-learning')
+plt.plot(scores, label='n-step Sarsa')
+plt.plot(averages, label='Average')
+plt.plot([475] * len(scores), label='Goal')
 plt.legend()
 plt.xlabel('Episode number')
-plt.ylabel('Average reward')
+plt.ylabel('Score')
 plt.show()
 
 env.close()
