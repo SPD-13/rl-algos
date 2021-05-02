@@ -17,6 +17,7 @@ env.seed(0)
 alpha = 0.4
 # No need for discount since episodes always terminate
 discount = 1
+max_episode_length = 500
 
 class StateInfo(NamedTuple):
     # Minimum (approximately) observed value for a piece of state
@@ -72,7 +73,7 @@ def sarsa(output = False):
             t += 1
             if output:
                 env.render()
-            if t == 200:
+            if t == max_episode_length:
                 break
             observation, reward, done, info = env.step(a)
             s_prime = get_state(observation)
@@ -107,7 +108,7 @@ def q_learning(output = False):
             t += 1
             if output:
                 env.render()
-            if t == 200:
+            if t == max_episode_length:
                 break
             a = choose_action(q, s, epsilon)
             observation, reward, done, info = env.step(a)
@@ -140,7 +141,7 @@ def n_step_sarsa(n, output = False):
     k = 1
     while average < 195:
         epsilon = 1 / k
-        T = 200
+        T = max_episode_length
         t = 0
         observation = env.reset()
         s[0] = get_state(observation)
@@ -150,7 +151,7 @@ def n_step_sarsa(n, output = False):
                 if output:
                     env.render()
                 # Don't apply learning algorithm if maximum timestep is reached
-                if t + 1 == 200:
+                if t + 1 == max_episode_length:
                     break
                 observation, r[m(t + 1)], done, info = env.step(a[m(t)])
                 if done:
