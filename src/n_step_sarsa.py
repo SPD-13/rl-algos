@@ -157,13 +157,12 @@ def n_step_sarsa(n):
         while t - n + 1 < T:
             if t < T:
                 env.render()
+                # Don't apply learning algorithm if maximum timestep is reached
+                if t + 1 == 200:
+                    break
                 observation, r[m(t + 1)], done, info = env.step(a[m(t)])
                 if done:
                     T = t + 1
-                    # Don't apply learning algorithm if maximum timestep is reached
-                    if T == 200:
-                        t = T + n - 1
-                        break
                 else:
                     s[m(t + 1)] = get_state(observation)
                     a[m(t + 1)] = choose_action(q, s[m(t + 1)], epsilon)
@@ -186,11 +185,11 @@ def n_step_sarsa(n):
     return scores, averages, total_steps
 
 time_start = time.perf_counter()
-scores, averages, total_steps = sarsa()
+scores, averages, total_steps = n_step_sarsa(8)
 time_end = time.perf_counter()
 
 execution_time = time_end - time_start
-print('\n-- Sarsa --')
+print('\n-- n-step Sarsa --')
 print(f'Number of episodes before convergence: {len(scores)}')
 print(f'Execution time per 1000 time steps: {execution_time * 1000 / total_steps:.4f}s\n')
 
@@ -222,6 +221,6 @@ def plot_res(values, averages, title=''):
     ax[1].legend()
     plt.show()
 
-plot_res(scores, averages, 'Sarsa')
+plot_res(scores, averages, 'n-step Sarsa')
 
 env.close()
