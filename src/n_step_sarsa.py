@@ -18,16 +18,6 @@ alpha = 0.4
 # No need for discount since episodes always terminate
 discount = 1
 
-#position_range = env.observation_space.high[0] - env.observation_space.low[0]
-#position_min = env.observation_space.low[0]
-#angle_range = env.observation_space.high[2] - env.observation_space.low[2]
-#angle_min = env.observation_space.low[2]
-
-# Max cart velocity ~= 4.370761097745926
-# Min cart velocity ~= -0.4184858819204502
-# Max pole angular velocity ~= 0.9178660833775616
-# Min pole angular velocity -3.1944354323964013
-
 class StateInfo(NamedTuple):
     # Minimum (approximately) observed value for a piece of state
     min: float
@@ -65,15 +55,14 @@ def choose_action(q, state, epsilon):
         return env.action_space.sample()
     return np.argmax(q[state])
 
-def sarsa():
+def sarsa(output = False):
     scores = []
     averages = []
     average = 0
-    total_steps = 0
     q = np.zeros((number_states, 2))
     k = 1
     while average < 195:
-        epsilon = 1 / k
+        epsilon = 10 / k
         done = False
         t = 0
         observation = env.reset()
@@ -81,7 +70,8 @@ def sarsa():
         a = choose_action(q, s, epsilon)
         while not done:
             t += 1
-            env.render()
+            if output:
+                env.render()
             if t == 200:
                 break
             observation, reward, done, info = env.step(a)
@@ -92,23 +82,22 @@ def sarsa():
                 future = q[s_prime, a_prime]
             q[s, a] += alpha * (reward + discount * future - q[s, a])
             s, a = s_prime, a_prime
-        print(f'{k}: Episode finished after {t} timesteps.')
+        if output:
+            print(f'{k}: Episode finished after {t} timesteps.')
         scores.append(t)
         # Average of the last 100 episodes
         average = sum(scores[-100:]) / len(scores[-100:])
         averages.append(average)
-        total_steps += t
         k += 1
-    return scores, averages, total_steps
+    return scores, averages
 
-def q_learning():
+def q_learning(output = False):
+    scores = []
+    averages = []
     average = 0
-    averages = [0]
-    beta = 0.99
-    total_steps = 0
     q = np.zeros((number_states, 2))
     k = 1
-    while averages[-1] < 475:
+    while average < 195:
         epsilon = 1 / k
         done = False
         t = 0
@@ -116,8 +105,9 @@ def q_learning():
         s = get_state(observation)
         while not done:
             t += 1
-            #env.render()
-            if t == 500:
+            if output:
+                env.render()
+            if t == 200:
                 break
             a = choose_action(q, s, epsilon)
             observation, reward, done, info = env.step(a)
@@ -127,20 +117,21 @@ def q_learning():
                 future = np.amax(q[s_prime])
             q[s, a] += alpha * (reward + discount * future - q[s, a])
             s = s_prime
-        #print(f'{k}: Episode finished after {t} timesteps.')
-        average = beta * average + (1 - beta) * t
-        averages.append(average / (1 - beta ** k))
-        total_steps += t
+        if output:
+            print(f'{k}: Episode finished after {t} timesteps.')
+        scores.append(t)
+        # Average of the last 100 episodes
+        average = sum(scores[-100:]) / len(scores[-100:])
+        averages.append(average)
         k += 1
-    return averages, total_steps
+    return scores, averages
 
-def n_step_sarsa(n):
+def n_step_sarsa(n, output = False):
     if n < 1:
         return
     scores = []
     averages = []
     average = 0
-    total_steps = 0
     q = np.zeros((number_states, 2))
     s = np.zeros(n + 1, dtype=int)
     a = np.zeros(n + 1, dtype=int)
@@ -156,7 +147,8 @@ def n_step_sarsa(n):
         a[0] = choose_action(q, s[0], epsilon)
         while t - n + 1 < T:
             if t < T:
-                env.render()
+                if output:
+                    env.render()
                 # Don't apply learning algorithm if maximum timestep is reached
                 if t + 1 == 200:
                     break
@@ -175,23 +167,24 @@ def n_step_sarsa(n):
                     g += discount ** n * q[s[m(tau + n)], a[m(tau + n)]]
                 q[s[m(tau)], a[m(tau)]] += alpha * (g - q[s[m(tau)], a[m(tau)]])
             t += 1
-        print(f'{k}: Episode finished after {T} timesteps.')
+        if output:
+            print(f'{k}: Episode finished after {T} timesteps.')
         scores.append(T)
         # Average of the last 100 episodes
-        average = sum(scores[-100:]) / 100
+        average = sum(scores[-100:]) / len(scores[-100:])
         averages.append(average)
-        total_steps += T
         k += 1
-    return scores, averages, total_steps
+    return scores, averages
 
 time_start = time.perf_counter()
-scores, averages, total_steps = n_step_sarsa(8)
+scores, averages = n_step_sarsa(8)
 time_end = time.perf_counter()
 
 execution_time = time_end - time_start
 print('\n-- n-step Sarsa --')
 print(f'Number of episodes before convergence: {len(scores)}')
-print(f'Execution time per 1000 time steps: {execution_time * 1000 / total_steps:.4f}s\n')
+print(f'Total execution time: {execution_time:.4f}s')
+print(f'Execution time per 1000 time steps: {execution_time * 1000 / sum(scores):.4f}s\n')
 
 def plot_res(values, averages, title=''):
     ''' Plot the reward curve and histogram of results over time.'''
@@ -214,9 +207,9 @@ def plot_res(values, averages, title=''):
         print('')
     
     # Plot the histogram of results
-    ax[1].hist(values[-100:])
+    ax[1].hist(values)
     ax[1].axvline(195, c='red', label='goal')
-    ax[1].set_xlabel('Scores per Last 100 Episodes')
+    ax[1].set_xlabel('Scores')
     ax[1].set_ylabel('Frequency')
     ax[1].legend()
     plt.show()
