@@ -11,9 +11,9 @@ class Agent:
     method
     """
 
-    def choose_action(self, state):
+    def choose_action(self, state, epsilon):
         action = 0
-        if np.random.uniform(0, 1) < self.epsilon:
+        if np.random.uniform(0, 1) < epsilon:
             action = self.action_space.sample()
         else:
             action = np.argmax(self.Q[get_state(state), :])

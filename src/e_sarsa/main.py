@@ -43,31 +43,29 @@ average = 0 # average for 100 episodes
 k = 1
 
 expectedSarsaAgent = ExpectedSarsaAgent(
-        0, alpha, gamma, number_states,
+        alpha, gamma, number_states,
         env.action_space.n, env.action_space)
 
 while average < 195:
     # Initialize the necessary parameters before
     # the start of the episode
     epsilon = 1 / k
-    expectedSarsaAgent.epsilon = epsilon
     done = False
     t = 0
     state1 = env.reset()
-    action1 = expectedSarsaAgent.choose_action(state1)
+    action1 = expectedSarsaAgent.choose_action(state1, epsilon)
     episodeReward = 0
 
-    # while t < max_steps:
     while not done:
 
         # Getting the next state, reward, and other parameters
         state2, reward, done, info = env.step(action1)
 
         # Choosing the next action
-        action2 = expectedSarsaAgent.choose_action(state2)
+        action2 = expectedSarsaAgent.choose_action(state2, epsilon)
 
         # Learning the Q-value
-        expectedSarsaAgent.update(state1, state2, reward, action1, action2)
+        expectedSarsaAgent.update(epsilon, state1, state2, reward, action1, action2)
 
         state1 = state2
         action1 = action2
@@ -76,7 +74,6 @@ while average < 195:
         t += 1
 
     # Append the sum of reward at the end of the episode
-    # scores.append(episodeReward)
     scores.append(t)
     average = sum(scores[-100:]) / len(scores[-100:])
     averages.append(average)

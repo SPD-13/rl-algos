@@ -8,7 +8,7 @@ from Agent import Agent
 
 class ExpectedSarsaAgent(Agent):
 
-    def __init__(self, epsilon, alpha, gamma, number_states, num_actions, action_space):
+    def __init__(self, alpha, gamma, number_states, num_actions, action_space):
         """
         Constructor
         Args:
@@ -18,7 +18,7 @@ class ExpectedSarsaAgent(Agent):
             num_actions: The number of actions
             action_space: To call the random action
         """
-        self.epsilon = epsilon
+        # self.epsilon = epsilon
         self.alpha = alpha
         self.gamma = gamma
         self.num_state = number_states
@@ -26,7 +26,7 @@ class ExpectedSarsaAgent(Agent):
         self.Q = np.zeros((self.num_state, self.num_actions))
         self.action_space = action_space
 
-    def update(self, prev_state, next_state, reward, prev_action, next_action):
+    def update(self, epsilon, prev_state, next_state, reward, prev_action, next_action):
         """
         Update the action value function using the Expected SARSA update.
         Q(S, A) = Q(S, A) + alpha(reward + (pi * Q(S_, A_) - Q(S, A))
@@ -49,8 +49,8 @@ class ExpectedSarsaAgent(Agent):
             if self.Q[get_state(next_state)][i] == q_max:
                 greedy_actions += 1
 
-        non_greedy_action_probability = self.epsilon / self.num_actions
-        greedy_action_probability = ((1 - self.epsilon) / greedy_actions) + non_greedy_action_probability
+        non_greedy_action_probability = epsilon / self.num_actions
+        greedy_action_probability = ((1 - epsilon) / greedy_actions) + non_greedy_action_probability
 
         for i in range(self.num_actions):
             if self.Q[get_state(next_state)][i] == q_max:
